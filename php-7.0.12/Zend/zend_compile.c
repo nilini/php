@@ -1574,7 +1574,10 @@ ZEND_API void zend_activate_auto_globals(void) /* {{{ */
 	} ZEND_HASH_FOREACH_END();
 }
 /* }}} */
-
+/* 
+	语义值统一通过 zval存储，zval在zendlex()中分配，然后将其地址作为参数传递给lex_scan()进行token扫描，
+	当匹配到某个token时，把语义值保存到该地址中，从而传递给语法解析器使用。
+*/
 int zendlex(zend_parser_stack_elem *elem) /* {{{ */
 {
 	zval zv;
@@ -1587,8 +1590,10 @@ int zendlex(zend_parser_stack_elem *elem) /* {{{ */
 
 again:
 	ZVAL_UNDEF(&zv);
+	//进行词法扫描，将zval地址传入
 	retval = lex_scan(&zv);
 	if (EG(exception)) {
+		//语法错误
 		return T_ERROR;
 	}
 
@@ -1610,6 +1615,7 @@ again:
 			break;
 	}
 	if (Z_TYPE(zv) != IS_UNDEF) {
+		//如果在分割token中有zval生成，则将其值复制到zend_ast_zval结构中。
 		elem->ast = zend_ast_create_zval(&zv);
 	}
 

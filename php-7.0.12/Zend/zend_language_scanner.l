@@ -1876,6 +1876,10 @@ inline_char_handler:
 }
 
 <ST_IN_SCRIPTING,ST_DOUBLE_QUOTES,ST_HEREDOC,ST_BACKQUOTE,ST_VAR_OFFSET>"$"{LABEL} {
+	//将匹配的语义值保存在zval中，只保存{LABEL}内容，不包括$，所以是 yytext+1
+	//yytext指向命中的语义值起始位置，类型为char*,yyleng为语义值的长度，zend_copy_value
+	//将创建zend_string的value,该语义值返回到zendlex()中后，会被保存到ZEND_AST_ZVAL类型的节点中
+	//该节点的val就是解析出的语义值
 	zend_copy_value(zendlval, (yytext+1), (yyleng-1));
 	RETURN_TOKEN(T_VARIABLE);
 }

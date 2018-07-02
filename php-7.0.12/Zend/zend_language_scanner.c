@@ -570,13 +570,19 @@ ZEND_API int open_file_for_scanning(zend_file_handle *file_handle)
 }
 END_EXTERN_C()
 
-
+/* 
+	编译开始的入口函数 
+	1、首先打开php文件
+	2、然后调用zendparse()完成语法分析，zendparse()中不断调用zendlex()切割token，然后匹配语法，生成抽象语法树。
+	zend_language_parse.y语法规则文件中的zend_ast_create()方法就是生成语法树节点的操作。
+*/
 ZEND_API zend_op_array *compile_file(zend_file_handle *file_handle, int type)
 {
 	zend_lex_state original_lex_state;
 	zend_op_array *op_array = NULL;
 	zend_save_lexical_state(&original_lex_state);
 
+	//打开php脚本文件
 	if (open_file_for_scanning(file_handle)==FAILURE) {
 		if (type==ZEND_REQUIRE) {
 			zend_message_dispatcher(ZMSG_FAILED_REQUIRE_FOPEN, file_handle->filename);
@@ -584,7 +590,7 @@ ZEND_API zend_op_array *compile_file(zend_file_handle *file_handle, int type)
 		} else {
 			zend_message_dispatcher(ZMSG_FAILED_INCLUDE_FOPEN, file_handle->filename);
 		}
-	} else {
+	} else { 
 		zend_bool original_in_compilation = CG(in_compilation);
 		CG(in_compilation) = 1;
 
