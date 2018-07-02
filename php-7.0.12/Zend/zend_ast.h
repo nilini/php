@@ -29,6 +29,10 @@
 #define ZEND_AST_IS_LIST_SHIFT      7
 #define ZEND_AST_NUM_CHILDREN_SHIFT 8
 
+/* 
+	节点类型 
+	节点的子节点类型都是固定的，根据kind就可知道该节点的子节点数
+*/
 enum _zend_ast_kind {
 	/* special nodes */
 	ZEND_AST_ZVAL = 1 << ZEND_AST_SPECIAL_SHIFT,
@@ -59,12 +63,12 @@ enum _zend_ast_kind {
 	ZEND_AST_TRAIT_ADAPTATIONS,
 	ZEND_AST_USE,
 
-	/* 0 child nodes */
+	/* 0个子节点。0 child nodes */
 	ZEND_AST_MAGIC_CONST = 0 << ZEND_AST_NUM_CHILDREN_SHIFT,
 	ZEND_AST_TYPE,
 
-	/* 1 child node */
-	ZEND_AST_VAR = 1 << ZEND_AST_NUM_CHILDREN_SHIFT,
+	/* 1个子节点的类型。1 child node */
+	ZEND_AST_VAR = 1 << ZEND_AST_NUM_CHILDREN_SHIFT, //64
 	ZEND_AST_CONST,
 	ZEND_AST_UNPACK,
 	ZEND_AST_UNARY_PLUS,
@@ -97,8 +101,8 @@ enum _zend_ast_kind {
 	ZEND_AST_BREAK,
 	ZEND_AST_CONTINUE,
 
-	/* 2 child nodes */
-	ZEND_AST_DIM = 2 << ZEND_AST_NUM_CHILDREN_SHIFT,
+	/* 2个子节点的类型。2 child nodes */
+	ZEND_AST_DIM = 2 << ZEND_AST_NUM_CHILDREN_SHIFT, //512
 	ZEND_AST_PROP,
 	ZEND_AST_STATIC_PROP,
 	ZEND_AST_CALL,
@@ -151,14 +155,27 @@ enum _zend_ast_kind {
 typedef uint16_t zend_ast_kind;
 typedef uint16_t zend_ast_attr;
 
+/*
+	1、普通节点
+	这类节点作为非叶子节点，通常用于某种语法的根节点，结构为 zend_ast
+*/
 struct _zend_ast {
-	zend_ast_kind kind; /* Type of the node (ZEND_AST_* enum constant) */
+	zend_ast_kind kind; /* 节点类型 Type of the node (ZEND_AST_* enum constant) */
 	zend_ast_attr attr; /* Additional attribute, use depending on node type */
-	uint32_t lineno;    /* Line number */
-	zend_ast *child[1]; /* Array of children (using struct hack) */
+	uint32_t lineno;    /* 行号 Line number */
+	zend_ast *child[1]; /* 子节点。不同kind类型zend_ast的子节点数是不同的。Array of children (using struct hack) */
 };
 
 /* Same as zend_ast, but with children count, which is updated dynamically */
+/*
+	2、list节点
+	list节点是多个节点的组合，编译时循环编译各个节点即可。与普通节点zend_ast相比做了一个记录子节点数量的成员children。
+	zend_ast_list与zend_ast节点前三个成员完全一致，因此使用时会把zend_ast_list的内存地址转为zend_ast插入抽象语法树，
+	使用时再根据kind转为zend_ast_list，这样将所有的节点统一为zend_ast节点。
+
+	list节点中有一个特殊的节点，ZEND_AST_STNT_LIST，值为133。这个节点类型本身不表示任何语法，只是用来组值各个节点的，
+	相当于一个节点数组，里面的节点之间没有任何关系，抽象语法树的根节点 CG(ast) 就是这个类型。
+*/
 typedef struct _zend_ast_list {
 	zend_ast_kind kind;
 	zend_ast_attr attr;
@@ -168,6 +185,10 @@ typedef struct _zend_ast_list {
 } zend_ast_list;
 
 /* Lineno is stored in val.u2.lineno */
+/*
+	3、数据节点
+	它没有子节点，而多了一个zval成员，通常作为叶子节点，用于存储语法分析器切割出的token字符串，也就是语法的操作对象。
+*/
 typedef struct _zend_ast_zval {
 	zend_ast_kind kind;
 	zend_ast_attr attr;
