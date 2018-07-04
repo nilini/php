@@ -1575,6 +1575,7 @@ ZEND_API void zend_activate_auto_globals(void) /* {{{ */
 }
 /* }}} */
 /* 
+	zendlex()词法分析入口
 	语义值统一通过 zval存储，zval在zendlex()中分配，然后将其地址作为参数传递给lex_scan()进行token扫描，
 	当匹配到某个token时，把语义值保存到该地址中，从而传递给语法解析器使用。
 */

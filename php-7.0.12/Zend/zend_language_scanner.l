@@ -1106,6 +1106,7 @@ static zend_always_inline int emit_token(int token, int token_line)
 
 #define RETURN_TOKEN(token) return emit_token(token, start_line);
 
+//词法分析入口函数
 int lex_scan(zval *zendlval)
 {
 

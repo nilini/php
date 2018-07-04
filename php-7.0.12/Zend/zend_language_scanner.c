@@ -573,7 +573,7 @@ END_EXTERN_C()
 /* 
 	编译开始的入口函数 
 	1、首先打开php文件
-	2、然后调用zendparse()完成语法分析，zendparse()中不断调用zendlex()切割token，然后匹配语法，生成抽象语法树。
+	2、然后调用zendparse()完成语法分析，zendparse()(即yyparse)中不断调用zendlex()(即lex)切割token，然后匹配语法，生成抽象语法树。
 	zend_language_parse.y语法规则文件中的zend_ast_create()方法就是生成语法树节点的操作。
 */
 ZEND_API zend_op_array *compile_file(zend_file_handle *file_handle, int type)
@@ -596,6 +596,7 @@ ZEND_API zend_op_array *compile_file(zend_file_handle *file_handle, int type)
 
 		CG(ast) = NULL;
 		CG(ast_arena) = zend_arena_create(1024 * 32);
+		//zendparse()是语法分析入口
 		if (!zendparse()) {
 			zval retval_zv;
 			zend_file_context original_file_context;
